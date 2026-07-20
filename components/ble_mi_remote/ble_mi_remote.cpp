@@ -169,7 +169,10 @@ namespace esphome {
       hid->setPnp(sid, vid, pid, version);
       hid->setHidInfo(0x00, 0x00);
 
-      NimBLEDevice::setSecurityAuth(true, true, true);
+      // Bonding yes, MITM no (this is a No-Input-No-Output device -- Just Works pairing is
+      // correct here; requiring MITM protection is asking for a passkey exchange this device
+      // can never perform), Secure Connections yes.
+      NimBLEDevice::setSecurityAuth(true, false, true);
 
       hid->setReportMap((uint8_t*) _hidReportDescriptor, sizeof(_hidReportDescriptor));
       pServer->start();
