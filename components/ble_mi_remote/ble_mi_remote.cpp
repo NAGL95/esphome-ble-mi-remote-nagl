@@ -1,4 +1,3 @@
-
 #ifdef USE_ESP32
 
 #include "ble_mi_remote.h"
@@ -178,8 +177,25 @@ namespace esphome {
       onStarted(pServer);
 
       advertising = pServer->getAdvertising();
-      advertising->setAppearance(HID_KEYBOARD);
-      advertising->addServiceUUID(hid->getHidService()->getUUID());
+
+      // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
+      // with a BLE sniffer (nRF52840 + Wireshark). The projector's "restore original remote"
+      // scan appears to require LE *Limited* Discoverable Mode specifically -- NimBLE defaults
+      // to General Discoverable, which this scan silently ignores. It also expects a legacy
+      // Class-of-Device field that NimBLE never emits on its own. Appearance is intentionally
+      // NOT set -- the real remote does not advertise it either.
+      static const uint8_t kOriginalRemoteAdvData[] = {
+        0x02, 0x01, 0x05,                     // Flags: LE Limited Discoverable, BR/EDR unsupported
+        0x03, 0xff, 0x00, 0x00,               // Manufacturer Specific: company ID 0x0000, no payload
+        0x06, 0x08, 'M', 'I', ' ', 'R', 'C',  // Shortened Local Name: "MI RC"
+        0x03, 0x02, 0x12, 0x18,               // Incomplete List of 16-bit Service UUIDs: 0x1812 (HID)
+        0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device: 0x000504 (Peripheral/HID, Joystick)
+        0x02, 0x0a, 0x00,                     // Tx Power Level: 0 dBm
+      };
+
+      NimBLEAdvertisementData advData;
+      advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
+      advertising->setAdvertisementData(advData);
       advertising->enableScanResponse(false);
 
       advertising->start();
