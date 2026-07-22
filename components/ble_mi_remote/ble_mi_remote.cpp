@@ -187,13 +187,24 @@ namespace esphome {
       // to General Discoverable, which this scan silently ignores. It also expects a legacy
       // Class-of-Device field that NimBLE never emits on its own. Appearance is intentionally
       // NOT set -- the real remote does not advertise it either.
+      // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
+      // with a BLE sniffer (nRF52840 + Wireshark / btmon), 31-byte variant (a later, more
+      // complete capture showed 5 extra trailing bytes -- an unrecognized AD type 0xFE -- that
+      // an earlier, shorter capture had missed; the manufacturer-data placeholder's second byte
+      // also differs between captures, possibly a per-session/per-wake value rather than a fixed
+      // constant). The projector's "restore original remote" scan appears to require LE
+      // *Limited* Discoverable Mode specifically -- NimBLE defaults to General Discoverable,
+      // which this scan silently ignores. It also expects a legacy Class-of-Device field that
+      // NimBLE never emits on its own. Appearance is intentionally NOT set -- the real remote
+      // does not advertise it either.
       static const uint8_t kOriginalRemoteAdvData[] = {
         0x02, 0x01, 0x05,                     // Flags: LE Limited Discoverable, BR/EDR unsupported
-        0x03, 0xff, 0x00, 0x00,               // Manufacturer Specific: company ID 0x0000, no payload
+        0x03, 0xff, 0x00, 0x01,               // Manufacturer Specific: placeholder bytes 00 01 (varies between captures)
         0x06, 0x08, 'M', 'I', ' ', 'R', 'C',  // Shortened Local Name: "MI RC"
         0x03, 0x02, 0x12, 0x18,               // Incomplete List of 16-bit Service UUIDs: 0x1812 (HID)
         0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device: 0x000504 (Peripheral/HID, Joystick)
         0x02, 0x0a, 0x00,                     // Tx Power Level: 0 dBm
+        0x04, 0xfe, 0xa5, 0xe2, 0x65,         // Unrecognized vendor AD type 0xFE -- meaning unknown, replicated as-is
       };
 
       NimBLEAdvertisementData advData;
