@@ -212,7 +212,9 @@ namespace esphome {
       advertising->setAdvertisementData(advData);
       advertising->enableScanResponse(false);
 
-      advertising->start();
+      if (autostart_) {
+        advertising->start();
+      }
 
       hid->setBatteryLevel(batteryLevel);
 
@@ -488,6 +490,15 @@ namespace esphome {
           ESP_LOGD(TAG, "Send: %d, %d, %d", _specialKeyReport.keys[0], _specialKeyReport.keys[1], _specialKeyReport.keys[2]);
 
           sendReport (&_specialKeyReport);
+          
+          if (k == SPECIAL_POWER) {
+            this->set_timeout("power_off", 500, [this]() {
+              this->stop();
+              this->set_timeout("power_resume", 15000, [this]() {
+                this->start();
+              });
+            });
+          }
       }
     }
 
@@ -513,8 +524,6 @@ namespace esphome {
     void BleMiRemote::onConnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo) {
       this->_connected = true;
       NimBLEConnInfo peer = connInfo;
-
-      release();
     }
 
     void BleMiRemote::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo, int reason) {

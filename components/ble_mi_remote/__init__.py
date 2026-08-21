@@ -56,7 +56,8 @@ CONFIG_SCHEMA: Final = cv.Schema(
         cv.Optional(CONF_NAME, default=COMPONENT_CLASS): cv.Length(min=1),
         cv.Optional(CONF_MANUFACTURER_ID, default=COMPONENT_CLASS): cv.Length(min=1),
         cv.Optional(CONF_BATTERY_LEVEL, default=100): cv.int_range(min=0, max=100),
-        cv.Optional(CONF_RECONNECT, default=True): cv.boolean
+        cv.Optional(CONF_RECONNECT, default=True): cv.boolean,
+        cv.Optional(CONF_AUTOSTART, default=False): cv.boolean,
     }
 )
 
@@ -83,6 +84,8 @@ async def to_code(config: dict) -> None:
 
     await cg.register_component(var, config)
 
+    await cg.add(var.set_autostart(config[CONF_AUTOSTART]))
+    
     await adding_binary_sensors(var, config)
 
     await adding_special_keys(var, config)
