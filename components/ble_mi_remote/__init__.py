@@ -38,6 +38,7 @@ from .const import (
     COMPONENT_CLASS,
     CONF_RECONNECT,
     CONF_TEXT,
+    CONF_AUTOSTART,
     DOMAIN,
     LIBS_ADDITIONAL
 )
@@ -85,7 +86,7 @@ async def to_code(config: dict) -> None:
     await cg.register_component(var, config)
 
     await cg.add(var.set_autostart(config[CONF_AUTOSTART]))
-    
+
     await adding_binary_sensors(var, config)
 
     await adding_special_keys(var, config)
