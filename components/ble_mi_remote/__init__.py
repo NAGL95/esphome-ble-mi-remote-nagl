@@ -85,7 +85,7 @@ async def to_code(config: dict) -> None:
 
     await cg.register_component(var, config)
 
-    await cg.add(var.set_autostart(config[CONF_AUTOSTART]))
+    cg.add(var.set_autostart(config[CONF_AUTOSTART]))
 
     await adding_binary_sensors(var, config)
 
