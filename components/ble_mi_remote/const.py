@@ -34,6 +34,7 @@ CONF_KEYS: Final = "keys"
 CONF_RECONNECT: Final = "reconnect"
 CONF_BUTTONS: Final = "buttons"
 CONF_USE_DEFAULT_LIBS: Final = "use_default_libs"
+CONF_ADVERTISE_ON_BOOT: Final = "advertise_on_boot"
 
 COMPONENT_CLASS: Final = "BleMiRemote"
 COMPONENT_NUMBER_CLASS: Final = "BleMiRemoteNumber"

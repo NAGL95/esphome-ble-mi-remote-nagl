@@ -38,6 +38,7 @@ from .const import (
     COMPONENT_CLASS,
     CONF_RECONNECT,
     CONF_TEXT,
+    CONF_ADVERTISE_ON_BOOT,
     DOMAIN,
     LIBS_ADDITIONAL
 )
@@ -56,7 +57,8 @@ CONFIG_SCHEMA: Final = cv.Schema(
         cv.Optional(CONF_NAME, default=COMPONENT_CLASS): cv.Length(min=1),
         cv.Optional(CONF_MANUFACTURER_ID, default=COMPONENT_CLASS): cv.Length(min=1),
         cv.Optional(CONF_BATTERY_LEVEL, default=100): cv.int_range(min=0, max=100),
-        cv.Optional(CONF_RECONNECT, default=True): cv.boolean
+        cv.Optional(CONF_RECONNECT, default=True): cv.boolean,
+        cv.Optional(CONF_ADVERTISE_ON_BOOT, default=False): cv.boolean,
     }
 )
 
@@ -79,6 +81,7 @@ async def to_code(config: dict) -> None:
         config[CONF_MANUFACTURER_ID],
         config[CONF_BATTERY_LEVEL],
         config[CONF_RECONNECT]
+        config[CONF_ADVERTISE_ON_BOOT],
     )
 
     await cg.register_component(var, config)

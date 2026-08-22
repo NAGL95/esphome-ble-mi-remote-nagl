@@ -144,6 +144,7 @@ namespace esphome {
           batteryLevel(battery_level)
     {
       _reconnect = reconnect;
+      _advertise_on_boot = advertise_on_boot;
     }
 
     void BleMiRemote::setup() {
@@ -212,7 +213,11 @@ namespace esphome {
       advertising->setAdvertisementData(advData);
       advertising->enableScanResponse(false);
 
-      advertising->start();
+      if (this->_advertise_on_boot) {
+        advertising->start();
+      } else {
+        ESP_LOGI(TAG, "advertise_on_boot=false, waiting for explicit ble_mi_remote.start");
+      }
 
       hid->setBatteryLevel(batteryLevel);
 

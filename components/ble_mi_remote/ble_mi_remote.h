@@ -91,6 +91,8 @@ namespace esphome {
 				binary_sensor::BinarySensor *state_sensor_;
 
 			private:
+			  	bool _reconnect{true};
+  				bool _advertise_on_boot{false};
 				bool is_connected();
 				void update_timer();
 				void delay_ms(uint64_t ms);
