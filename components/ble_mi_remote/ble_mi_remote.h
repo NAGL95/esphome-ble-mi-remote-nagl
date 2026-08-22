@@ -55,7 +55,8 @@ namespace esphome {
 	namespace ble_mi_remote {
 		class BleMiRemote : public PollingComponent, public NimBLEServerCallbacks, public NimBLECharacteristicCallbacks {
 			public:
-				BleMiRemote(std::string name, std::string manufacturer_id, uint8_t battery_level = 100, bool reconnect = true);
+				BleMiRemote(std::string name, std::string manufacturer_id, uint8_t battery_level = 100,
+            				bool reconnect = true, bool advertise_on_boot = false);
 
 				void setup() override;
 				void update() override;
@@ -91,8 +92,7 @@ namespace esphome {
 				binary_sensor::BinarySensor *state_sensor_;
 
 			private:
-			  	bool _reconnect{true};
-  				bool _advertise_on_boot{false};
+  				
 				bool is_connected();
 				void update_timer();
 				void delay_ms(uint64_t ms);
@@ -108,6 +108,7 @@ namespace esphome {
 				NimBLEAdvertising*		advertising;
 
 				bool 				_reconnect{true};
+				bool _advertise_on_boot{false};
 				uint32_t 			_default_delay{100};
 				uint32_t 			_release_delay{8};
 				KeyReport			_keyReport;
