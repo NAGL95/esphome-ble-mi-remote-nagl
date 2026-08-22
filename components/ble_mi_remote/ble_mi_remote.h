@@ -109,6 +109,7 @@ namespace esphome {
 
 				bool 				_reconnect{true};
 				bool _advertise_on_boot{false};
+				uint32_t _last_advertise_retry{0};
 				uint32_t 			_default_delay{100};
 				uint32_t 			_release_delay{8};
 				KeyReport			_keyReport;
