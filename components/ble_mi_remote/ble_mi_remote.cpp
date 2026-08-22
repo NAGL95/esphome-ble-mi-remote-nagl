@@ -250,7 +250,14 @@ namespace esphome {
       pServer->startAdvertising();
     }
 
-    void BleMiRemote::update() { state_sensor_->publish_state(this->_connected); }
+    void BleMiRemote::update() {
+      state_sensor_->publish_state(this->_connected);
+        
+      if (!this->_connected && this->_advertise_on_boot && advertising != nullptr && !advertising->isAdvertising()) {
+        advertising->start();
+        ESP_LOGD(TAG, "Advertising was down (WiFi coexistence?), restarted");
+      }
+    }
 
     bool BleMiRemote::is_connected() {
       if (!this->_connected) {
