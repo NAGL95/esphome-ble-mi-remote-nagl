@@ -201,12 +201,11 @@ namespace esphome {
       // does not advertise it either.
       static const uint8_t kOriginalRemoteAdvData[] = {
         0x02, 0x01, 0x05,                     // Flags: LE Limited Discoverable, BR/EDR unsupported
-        0x03, 0xff, 0x00, 0x01,               // Manufacturer Specific: placeholder bytes 00 01 (varies between captures)
+        0x03, 0xff, 0x00, 0x00,               // Manufacturer Specific: company 0x0000, no payload
         0x06, 0x08, 'M', 'I', ' ', 'R', 'C',  // Shortened Local Name: "MI RC"
         0x03, 0x02, 0x12, 0x18,               // Incomplete List of 16-bit Service UUIDs: 0x1812 (HID)
         0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device: 0x000504 (Peripheral/HID, Joystick)
         0x02, 0x0a, 0x00,                     // Tx Power Level: 0 dBm
-        0x04, 0xfe, 0xa5, 0xe2, 0x65,         // Unrecognized vendor AD type 0xFE -- meaning unknown, replicated as-is
       };
 
       NimBLEAdvertisementData advData;
