@@ -220,7 +220,7 @@ namespace esphome {
         hex += buf;
       }
 
-      ESP_LOGI(TAG, "Advertisement payload set (%d bytes): %s", (int)payload.length(), hex.c_str());
+      ESP_LOGI(TAG, "Advertisement payload set (%d bytes): %s", (int)payload.size(), hex.c_str());
 
       if (this->_advertise_on_boot) {
         advertising->start();
