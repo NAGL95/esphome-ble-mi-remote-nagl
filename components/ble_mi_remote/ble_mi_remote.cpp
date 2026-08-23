@@ -242,26 +242,26 @@ namespace esphome {
       }
     }
 
-    void BleMiRemote::start() {
-      if (this->_reconnect) {
-        pServer->advertiseOnDisconnect(true);
-      }
-
-      pServer->startAdvertising();
-    }
-
     void BleMiRemote::update() {
       state_sensor_->publish_state(this->_connected);
         
       if (!this->_advertise_on_boot || this->_connected) return;
         
       uint32_t now = millis();
-      if (advertising != nullptr && !advertising->isAdvertising()
-          && (now - this->_last_advertise_retry > 3000)) {
+      if (now - this->_last_advertise_retry > 5000) {
         this->_last_advertise_retry = now;
+        advertising->stop();
         advertising->start();
-        ESP_LOGD(TAG, "Advertising was down, restarted");
+        ESP_LOGD(TAG, "Advertising re-kicked (coexistence guard)");
       }
+    }
+    
+    void BleMiRemote::start() {
+      if (this->_reconnect) {
+        pServer->advertiseOnDisconnect(true);
+      }
+      advertising->stop();     // безопасно, даже если реклама и так не шла
+      advertising->start();
     }
 
     bool BleMiRemote::is_connected() {
