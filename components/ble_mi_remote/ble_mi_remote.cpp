@@ -182,7 +182,12 @@ namespace esphome {
       onStarted(pServer);
 
       advertising = pServer->getAdvertising();
-
+      applyAdvertisementData();
+      if (this->_advertise_on_boot) {
+        advertising->start();
+      } else {
+        ESP_LOGI(TAG, "advertise_on_boot=false, waiting for explicit ble_mi_remote.start");
+      }
       // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
       // with a BLE sniffer (nRF52840 + Wireshark). The projector's "restore original remote"
       // scan appears to require LE *Limited* Discoverable Mode specifically -- NimBLE defaults
@@ -207,20 +212,13 @@ namespace esphome {
         0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device: 0x000504 (Peripheral/HID, Joystick)
         0x02, 0x0a, 0x00,                     // Tx Power Level: 0 dBm
       };
-
-      NimBLEAdvertisementData advData;
-      advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
-      advertising->setAdvertisementData(advData);
-      advertising->enableScanResponse(false);
-      std::vector<uint8_t> payload = advData.getPayload();
-      std::string hex;
-      char buf[4];
-      for (unsigned char c : payload) {
-        snprintf(buf, sizeof(buf), "%02X ", c);
-        hex += buf;
+      
+      void BleMiRemote::applyAdvertisementData() {
+        NimBLEAdvertisementData advData;
+        advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
+        advertising->setAdvertisementData(advData);
+        advertising->enableScanResponse(false);
       }
-
-      ESP_LOGI(TAG, "Advertisement payload set (%d bytes): %s", (int)payload.size(), hex.c_str());
 
       if (this->_advertise_on_boot) {
         advertising->start();
@@ -260,6 +258,7 @@ namespace esphome {
       if (now - this->_last_advertise_retry > 5000) {
         this->_last_advertise_retry = now;
         advertising->stop();
+        applyAdvertisementData();
         advertising->start();
         ESP_LOGD(TAG, "Advertising re-kicked (coexistence guard)");
       }
@@ -269,7 +268,8 @@ namespace esphome {
       if (this->_reconnect) {
         pServer->advertiseOnDisconnect(true);
       }
-      advertising->stop();     // безопасно, даже если реклама и так не шла
+      applyAdvertisementData();
+      advertising->stop();
       advertising->start();
     }
 
@@ -546,6 +546,7 @@ namespace esphome {
     void BleMiRemote::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo, int reason) {
       this->_connected = false;
       if (this->_reconnect) {
+        applyAdvertisementData();
         pServer->startAdvertising();
       }
     }
