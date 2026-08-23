@@ -60,6 +60,7 @@ namespace esphome {
 
 				void setup() override;
 				void update() override;
+				void applyAdvertisementData();
 
 				float get_setup_priority() const override { return setup_priority::AFTER_BLUETOOTH; }
 
