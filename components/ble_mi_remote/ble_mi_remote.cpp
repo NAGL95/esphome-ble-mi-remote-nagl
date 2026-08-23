@@ -212,7 +212,16 @@ namespace esphome {
       advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
       advertising->setAdvertisementData(advData);
       advertising->enableScanResponse(false);
+      std::string payload = advData.getPayload();
+      std::string hex;
+      char buf[4];
+      for (unsigned char c : payload) {
+        snprintf(buf, sizeof(buf), "%02X ", c);
+        hex += buf;
+      }
 
+      ESP_LOGI(TAG, "Advertisement payload set (%d bytes): %s", (int)payload.length(), hex.c_str());
+      
       if (this->_advertise_on_boot) {
         advertising->start();
       } else {
@@ -244,9 +253,9 @@ namespace esphome {
 
     void BleMiRemote::update() {
       state_sensor_->publish_state(this->_connected);
-        
+
       if (!this->_advertise_on_boot || this->_connected) return;
-        
+
       uint32_t now = millis();
       if (now - this->_last_advertise_retry > 5000) {
         this->_last_advertise_retry = now;
@@ -255,7 +264,7 @@ namespace esphome {
         ESP_LOGD(TAG, "Advertising re-kicked (coexistence guard)");
       }
     }
-    
+
     void BleMiRemote::start() {
       if (this->_reconnect) {
         pServer->advertiseOnDisconnect(true);
