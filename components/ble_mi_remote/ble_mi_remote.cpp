@@ -212,7 +212,7 @@ namespace esphome {
       advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
       advertising->setAdvertisementData(advData);
       advertising->enableScanResponse(false);
-      std::string payload = advData.getPayload();
+      std::vector<uint8_t> payload = advData.getPayload();
       std::string hex;
       char buf[4];
       for (unsigned char c : payload) {
@@ -221,7 +221,7 @@ namespace esphome {
       }
 
       ESP_LOGI(TAG, "Advertisement payload set (%d bytes): %s", (int)payload.length(), hex.c_str());
-      
+
       if (this->_advertise_on_boot) {
         advertising->start();
       } else {
