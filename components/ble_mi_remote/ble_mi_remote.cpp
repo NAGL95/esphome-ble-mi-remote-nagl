@@ -172,8 +172,7 @@ namespace esphome {
           "0000a002-0000-1000-8000-00805f9b34fb",
           NIMBLE_PROPERTY::WRITE_NR
       );
-      vendorService1->start();
-      
+
       // Вендорский сервис #2 — 0xd0ff
       NimBLEService* vendorService2 = pServer->createService("0000d0ff-3c17-d293-8e48-14fe2e4da212");
       vendorService2->createCharacteristic("0000ffd1-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::WRITE_NR);
@@ -185,9 +184,8 @@ namespace esphome {
       vendorService2->createCharacteristic("0000fff1-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
       vendorService2->createCharacteristic("0000fff2-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::WRITE);
       vendorService2->createCharacteristic("0000ffe0-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
-      vendorService2->start();
       
-      NimBLEServer* pServer = BNimBLEDevice::createServer();
+      NimBLEServer* pServer = NimBLEDevice::createServer();
 
       pServer->setCallbacks(this);
           pServer->advertiseOnDisconnect(this->_reconnect);
