@@ -161,7 +161,33 @@ namespace esphome {
       ESP_LOGI(TAG, "Setting this up...");
 
       NimBLEDevice::init(deviceName);
-      NimBLEServer* pServer = NimBLEDevice::createServer();
+      
+      // Вендорский сервис #1 — 0xd1ff
+      NimBLEService* vendorService1 = pServer->createService("0000d1ff-3c17-d293-8e48-14fe2e4da212");
+      NimBLECharacteristic* charA001 = vendorService1->createCharacteristic(
+          "0000a001-0000-1000-8000-00805f9b34fb",
+          NIMBLE_PROPERTY::NOTIFY | NIMBLE_PROPERTY::WRITE_NR
+      );
+      NimBLECharacteristic* charA002 = vendorService1->createCharacteristic(
+          "0000a002-0000-1000-8000-00805f9b34fb",
+          NIMBLE_PROPERTY::WRITE_NR
+      );
+      vendorService1->start();
+      
+      // Вендорский сервис #2 — 0xd0ff
+      NimBLEService* vendorService2 = pServer->createService("0000d0ff-3c17-d293-8e48-14fe2e4da212");
+      vendorService2->createCharacteristic("0000ffd1-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::WRITE_NR);
+      vendorService2->createCharacteristic("0000ffd2-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->createCharacteristic("0000ffd3-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->createCharacteristic("0000ffd4-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->createCharacteristic("0000ffd5-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->createCharacteristic("0000ffd8-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::WRITE_NR);
+      vendorService2->createCharacteristic("0000fff1-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->createCharacteristic("0000fff2-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::WRITE);
+      vendorService2->createCharacteristic("0000ffe0-0000-1000-8000-00805f9b34fb", NIMBLE_PROPERTY::READ);
+      vendorService2->start();
+      
+      NimBLEServer* pServer = BNimBLEDevice::createServer();
 
       pServer->setCallbacks(this);
           pServer->advertiseOnDisconnect(this->_reconnect);
