@@ -28,6 +28,7 @@ from esphome.cpp_generator import LambdaExpression, MockObj, TemplateArguments, 
 
 from .const import (
     ACTION_COMBINATION_CLASS,
+    ACTION_PAIR_CLASS,
     ACTION_PRESS_CLASS,
     ACTION_PRINT_CLASS,
     ACTION_RELEASE_CLASS,
@@ -226,19 +227,19 @@ async def ble_mi_remote_press_to_code(
     return var
 
 
-BleMiRemoteStartAction = ble_mi_remote_ns.class_(ACTION_START_CLASS, automation.Action)
+BleMiRemotePairAction = ble_mi_remote_ns.class_(ACTION_PAIR_CLASS, automation.Action)
 
 
 @automation.register_action(
-    f"{DOMAIN}.start",
-    BleMiRemoteStartAction,
+    f"{DOMAIN}.pair",
+    BleMiRemotePairAction,
     maybe_simple_id(OPERATION_BASE_SCHEMA),
-    synchronous=True,    
+    synchronous=True,
 )
-async def ble_mi_remote_start_to_code(
+async def ble_mi_remote_pair_to_code(
     config: dict, action_id: ID, template_arg: TemplateArguments, args: TemplateArgsType
 ) -> MockObj:
-    """Action start
+    """Action pair
 
     :param config: dict
     :param action_id: ID

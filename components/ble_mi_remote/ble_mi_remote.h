@@ -74,6 +74,7 @@ namespace esphome {
 
 				void start();
 				void applyAdvertisementData();
+				void pair();
 				void stop();
 
 				void begin(void);
@@ -94,6 +95,8 @@ namespace esphome {
 			private:
 				bool is_connected();
 				void update_timer();
+				void exit_pairing_mode();
+				void applyAdvertisementData(bool pairing_mode);
 				void delay_ms(uint64_t ms);
 
 				NimBLEServer 			*pServer;

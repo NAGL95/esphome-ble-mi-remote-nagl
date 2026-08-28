@@ -38,6 +38,16 @@ namespace esphome {
         BleMiRemote *ble_mi_remote_;
     };
 
+    template<typename... Ts> class BleMiRemotePairAction : public Action<Ts...> {
+      public:
+        explicit BleMiRemotePairAction(BleMiRemote *ble_mi_remote) : ble_mi_remote_(ble_mi_remote) {}
+
+        void play(Ts... x) override { this->ble_mi_remote_->pair(); }
+
+      protected:
+        BleMiRemote *ble_mi_remote_;
+    };
+
     template<typename... Ts> class BleMiRemoteStartAction : public Action<Ts...> {
       public:
         explicit BleMiRemoteStartAction(BleMiRemote *ble_mi_remote) : ble_mi_remote_(ble_mi_remote) {}

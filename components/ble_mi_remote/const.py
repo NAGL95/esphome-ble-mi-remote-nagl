@@ -41,6 +41,7 @@ COMPONENT_BUTTON_CLASS: Final = "BleMiRemoteButton"
 
 ACTION_START_CLASS: Final = "BleMiRemoteStartAction"
 ACTION_STOP_CLASS: Final = "BleMiRemoteStopAction"
+ACTION_PAIR_CLASS: Final = "BleMiRemotePairAction"
 ACTION_PRINT_CLASS: Final = "BleMiRemotePrintAction"
 ACTION_PRESS_CLASS: Final = "BleMiRemotePressAction"
 ACTION_RELEASE_CLASS: Final = "BleMiRemoteReleaseAction"

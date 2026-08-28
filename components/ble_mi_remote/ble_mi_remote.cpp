@@ -180,7 +180,7 @@ namespace esphome {
       onStarted(pServer);
 
       advertising = pServer->getAdvertising();
-      applyAdvertisementData();
+      applyAdvertisementData(false);  // idle mode by default, как настоящий пульт в покое
 
       advertising->start();
 
@@ -191,43 +191,62 @@ namespace esphome {
       release();
     }
 
-    void BleMiRemote::applyAdvertisementData() {
-      // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
-      // with a BLE sniffer (nRF52840 + Wireshark / btmon), 31-byte variant (a later, more
-      // complete capture showed 5 extra trailing bytes -- an unrecognized AD type 0xFE -- that
-      // an earlier, shorter capture had missed; the manufacturer-data placeholder's second byte
-      // also differs between captures, possibly a per-session/per-wake value rather than a fixed
-      // constant). The projector's "restore original remote" scan appears to require LE
-      // *Limited* Discoverable Mode specifically -- NimBLE defaults to General Discoverable,
-      // which this scan silently ignores. It also expects a legacy Class-of-Device field that
-      // NimBLE never emits on its own. Appearance is intentionally NOT set -- the real remote
-      // does not advertise it either.
-      static const uint8_t kOriginalRemoteAdvData[] = {
-        0x02, 0x01, 0x05,                     // Flags: LE Limited Discoverable, BR/EDR unsupported
-        0x03, 0xff, 0x00, 0x01,               // Manufacturer Specific: placeholder bytes 00 01 (varies between captures)
-        0x06, 0x08, 'M', 'I', ' ', 'R', 'C',  // Shortened Local Name: "MI RC"
-        0x03, 0x02, 0x12, 0x18,               // Incomplete List of 16-bit Service UUIDs: 0x1812 (HID)
-        0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device: 0x000504 (Peripheral/HID, Joystick)
-        0x02, 0x0a, 0x00,                     // Tx Power Level: 0 dBm
-        0x04, 0xfe, 0xa5, 0xe2, 0x65,         // Unrecognized vendor AD type 0xFE -- meaning unknown, replicated as-is
+    void BleMiRemote::applyAdvertisementData(bool pairing_mode) {
+      // Idle-состояние настоящего пульта: 26 байт, без хвоста, manufacturer 00 00.
+      static const uint8_t kIdleAdvData[] = {
+        0x02, 0x01, 0x05,
+        0x03, 0xff, 0x00, 0x00,
+        0x06, 0x08, 'M', 'I', ' ', 'R', 'C',
+        0x03, 0x02, 0x12, 0x18,
+        0x04, 0x0d, 0x04, 0x05, 0x00,
+        0x02, 0x0a, 0x00,
       };
 
-      // Scan response captured from the real remote alongside the primary advertisement:
-      // Complete Local Name "Xiaomi RC" (AD type 0x09), distinct from the shortened "MI RC"
-      // in the primary packet. Not previously replicated -- our firmware had scan response
-      // disabled entirely, so an active scanner (SCAN_REQ/SCAN_RSP) would get no response at all.
+      // Pairing-состояние настоящего пульта (подтверждено рабочим): 31 байт, с хвостом
+      // 04 fe a5 e2 65, manufacturer 00 01. Подтверждено реальным RF-дампом: настоящий пульт
+      // переключается именно на этот вариант при активации (HOME+MENU), и именно на нём
+      // у нас впервые сработало включение проектора.
+      static const uint8_t kPairingAdvData[] = {
+        0x02, 0x01, 0x05,
+        0x03, 0xff, 0x00, 0x01,
+        0x06, 0x08, 'M', 'I', ' ', 'R', 'C',
+        0x03, 0x02, 0x12, 0x18,
+        0x04, 0x0d, 0x04, 0x05, 0x00,
+        0x02, 0x0a, 0x00,
+        0x04, 0xfe, 0xa5, 0xe2, 0x65,
+      };
+
       static const uint8_t kScanResponseData[] = {
         0x0a, 0x09, 'X', 'i', 'a', 'o', 'm', 'i', ' ', 'R', 'C',
       };
 
       NimBLEAdvertisementData advData;
-      advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
+      if (pairing_mode) {
+        advData.addData(kPairingAdvData, sizeof(kPairingAdvData));
+      } else {
+        advData.addData(kIdleAdvData, sizeof(kIdleAdvData));
+      }
       advertising->setAdvertisementData(advData);
 
       NimBLEAdvertisementData scanResponseData;
       scanResponseData.addData(kScanResponseData, sizeof(kScanResponseData));
       advertising->setScanResponseData(scanResponseData);
       advertising->enableScanResponse(true);
+    }
+
+    void BleMiRemote::pair() {
+      ESP_LOGI(TAG, "Entering pairing mode for 30s");
+      applyAdvertisementData(true);
+      advertising->stop();
+      advertising->start();
+      this->set_timeout("pairing_mode", 30000, [this]() { this->exit_pairing_mode(); });
+    }
+
+    void BleMiRemote::exit_pairing_mode() {
+      ESP_LOGI(TAG, "Exiting pairing mode, back to idle advertisement");
+      applyAdvertisementData(false);
+      advertising->stop();
+      advertising->start();
     }
 
     void BleMiRemote::stop() {
