@@ -218,12 +218,8 @@ namespace esphome {
     
       // Appearance специально НЕ ставим — оригинал его не рекламирует
     
-      if (this->_advertise_on_boot) {
-        advertising->start();
-      } else {
-        ESP_LOGI(TAG, "advertise_on_boot=false, waiting for explicit start");
-      }
-    
+      advertising->start();
+          
       hid->setBatteryLevel(batteryLevel);
       ESP_LOGD(TAG, "Advertising started!");
       release();
