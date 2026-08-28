@@ -15,6 +15,8 @@
 #include <string>
 #include <list>
 #include "esphome/core/log.h"
+#include "esp_mac.h"
+#include "esp_bt.h"
 
 #define CONSUMER_ID 0x01
 #define KEYBOARD_ID 0x02
@@ -149,45 +151,81 @@ namespace esphome {
     void BleMiRemote::setup() {
       ESP_LOGI(TAG, "Setting this up...");
 
+      // === 1. Кастомный MAC (самый важный момент) ===
+      // Оригинал: 40:E1:71:47:D7:07
+      // ESP32 берёт Bluetooth MAC = base_mac + 2
+      // Поэтому ставим base на 40:E1:71:47:D7:05
+      uint8_t custom_base_mac[6] = {0x40, 0xE1, 0x71, 0x47, 0xD7, 0x05};
+      esp_err_t err = esp_base_mac_addr_set(custom_base_mac);
+      if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to set custom base MAC: %s", esp_err_to_name(err));
+      } else {
+        ESP_LOGI(TAG, "Custom base MAC set → BT address should be 40:E1:71:47:D7:07");
+      }
+    
       NimBLEDevice::init(deviceName);
+    
+      // Явно говорим, что используем Public address
+      NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_PUBLIC);
+    
       NimBLEServer* pServer = NimBLEDevice::createServer();
-
       pServer->setCallbacks(this);
-          pServer->advertiseOnDisconnect(this->_reconnect);
-
+      pServer->advertiseOnDisconnect(this->_reconnect);
+    
       hid = new NimBLEHIDDevice(pServer);
       inputSpecialKeys = hid->getInputReport(CONSUMER_ID);
       inputKeyboard = hid->getInputReport(KEYBOARD_ID);
       outputKeyboard = hid->getOutputReport(KEYBOARD_ID);
       outputKeyboard->setCallbacks(this);
-
+    
       vendorReport_06 = hid->getInputReport(0x06);
       vendorReport_07 = hid->getInputReport(0x07);
       vendorReport_08 = hid->getInputReport(0x08);
-
+    
       hid->setManufacturer(deviceManufacturer);
       hid->setPnp(sid, vid, pid, version);
       hid->setHidInfo(0x00, 0x00);
-
-      // Bonding yes, MITM no (this is a No-Input-No-Output device -- Just Works pairing is
-      // correct here; requiring MITM protection is asking for a passkey exchange this device
-      // can never perform), Secure Connections yes.
-      NimBLEDevice::setSecurityAuth(true, false, true);
-
-      hid->setReportMap((uint8_t*) _hidReportDescriptor, sizeof(_hidReportDescriptor));
+    
+      // Just Works pairing (без MITM — пульт не имеет дисплея/кнопок для PIN)
+      NimBLEDevice::setSecurityAuth(true, false, true);   // bonding, no MITM, SC
+    
+      hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
       pServer->start();
-
+    
       onStarted(pServer);
-
+    
       advertising = pServer->getAdvertising();
-      applyAdvertisementData(false);  // idle mode by default, как настоящий пульт в покое
-
-      advertising->start();
-
+    
+      // === 2. Точная копия advertising оригинального пульта ===
+      static const uint8_t kOriginalRemoteAdvData[] = {
+        0x02, 0x01, 0x05,                     // Flags: LE Limited Discoverable + BR/EDR Not Supported
+        0x03, 0xff, 0x00, 0x00,               // Manufacturer Specific: company 0x0000
+        0x06, 0x08, 'M', 'I', ' ', 'R', 'C',  // Shortened Local Name: "MI RC"
+        0x03, 0x02, 0x12, 0x18,               // HID Service UUID 0x1812
+        0x04, 0x0d, 0x04, 0x05, 0x00,         // Class of Device 0x000504
+        0x02, 0x0a, 0x00,                     // Tx Power 0 dBm
+      };
+    
+      NimBLEAdvertisementData advData;
+      advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
+      advertising->setAdvertisementData(advData);
+    
+      // Scan Response с полным именем (как у оригинала)
+      NimBLEAdvertisementData scanResponse;
+      scanResponse.setName("Xiaomi RC");
+      advertising->setScanResponseData(scanResponse);
+      advertising->enableScanResponse(true);
+    
+      // Appearance специально НЕ ставим — оригинал его не рекламирует
+    
+      if (this->_advertise_on_boot) {
+        advertising->start();
+      } else {
+        ESP_LOGI(TAG, "advertise_on_boot=false, waiting for explicit start");
+      }
+    
       hid->setBatteryLevel(batteryLevel);
-
       ESP_LOGD(TAG, "Advertising started!");
-
       release();
     }
 
