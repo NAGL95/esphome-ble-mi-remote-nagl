@@ -180,13 +180,18 @@ namespace esphome {
       onStarted(pServer);
 
       advertising = pServer->getAdvertising();
+      applyAdvertisementData();
 
-      // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
-      // with a BLE sniffer (nRF52840 + Wireshark). The projector's "restore original remote"
-      // scan appears to require LE *Limited* Discoverable Mode specifically -- NimBLE defaults
-      // to General Discoverable, which this scan silently ignores. It also expects a legacy
-      // Class-of-Device field that NimBLE never emits on its own. Appearance is intentionally
-      // NOT set -- the real remote does not advertise it either.
+      advertising->start();
+
+      hid->setBatteryLevel(batteryLevel);
+
+      ESP_LOGD(TAG, "Advertising started!");
+
+      release();
+    }
+
+    void BleMiRemote::applyAdvertisementData() {
       // Exact byte-for-byte replica of the real YKF472-8201 remote's advertisement, captured
       // with a BLE sniffer (nRF52840 + Wireshark / btmon), 31-byte variant (a later, more
       // complete capture showed 5 extra trailing bytes -- an unrecognized AD type 0xFE -- that
@@ -207,18 +212,22 @@ namespace esphome {
         0x04, 0xfe, 0xa5, 0xe2, 0x65,         // Unrecognized vendor AD type 0xFE -- meaning unknown, replicated as-is
       };
 
+      // Scan response captured from the real remote alongside the primary advertisement:
+      // Complete Local Name "Xiaomi RC" (AD type 0x09), distinct from the shortened "MI RC"
+      // in the primary packet. Not previously replicated -- our firmware had scan response
+      // disabled entirely, so an active scanner (SCAN_REQ/SCAN_RSP) would get no response at all.
+      static const uint8_t kScanResponseData[] = {
+        0x0a, 0x09, 'X', 'i', 'a', 'o', 'm', 'i', ' ', 'R', 'C',
+      };
+
       NimBLEAdvertisementData advData;
       advData.addData(kOriginalRemoteAdvData, sizeof(kOriginalRemoteAdvData));
       advertising->setAdvertisementData(advData);
-      advertising->enableScanResponse(false);
 
-      advertising->start();
-
-      hid->setBatteryLevel(batteryLevel);
-
-      ESP_LOGD(TAG, "Advertising started!");
-
-      release();
+      NimBLEAdvertisementData scanResponseData;
+      scanResponseData.addData(kScanResponseData, sizeof(kScanResponseData));
+      advertising->setScanResponseData(scanResponseData);
+      advertising->enableScanResponse(true);
     }
 
     void BleMiRemote::stop() {

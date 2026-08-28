@@ -73,6 +73,7 @@ namespace esphome {
 				void release();
 
 				void start();
+				void applyAdvertisementData();
 				void stop();
 
 				void begin(void);
