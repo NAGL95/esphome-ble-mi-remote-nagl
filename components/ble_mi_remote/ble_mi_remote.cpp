@@ -187,7 +187,9 @@ namespace esphome {
       hid->setHidInfo(0x00, 0x00);
     
       // Just Works pairing (без MITM — пульт не имеет дисплея/кнопок для PIN)
-      NimBLEDevice::setSecurityAuth(true, false, true);   // bonding, no MITM, SC
+      NimBLEDevice::setSecurityAuth(true, false, false);   // bonding, no MITM, SC
+      NimBLEDevice::setSecurityInitKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID | BLE_SM_PAIR_KEY_DIST_SIGN);
+      NimBLEDevice::setSecurityRespKey(BLE_SM_PAIR_KEY_DIST_ENC | BLE_SM_PAIR_KEY_DIST_ID | BLE_SM_PAIR_KEY_DIST_SIGN);
     
       hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
       pServer->start();
