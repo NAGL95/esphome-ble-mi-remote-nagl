@@ -15,6 +15,7 @@
 #include <string>
 #include <list>
 #include "esphome/core/log.h"
+#include "esp_mac.h"
 
 #define CONSUMER_ID 0x01
 #define KEYBOARD_ID 0x02
@@ -148,6 +149,14 @@ namespace esphome {
 
     void BleMiRemote::setup() {
       ESP_LOGI(TAG, "Setting this up...");
+
+      // Клонируем MAC-адрес настоящего пульта (40:E1:71:47:D7:07). Гипотеза: "Remote &
+      // Accessories" на проекторе не делает общий скан любых HID-устройств, а пытается
+      // переподключиться именно к этому, заранее известному/забонденному адресу. Должно
+      // стоять строго до NimBLEDevice::init() -- адрес нельзя сменить после инициализации
+      // BT-стека.
+      uint8_t remote_mac[6] = {0x40, 0xE1, 0x71, 0x47, 0xD7, 0x07};
+      esp_base_mac_addr_set(remote_mac);
 
       NimBLEDevice::init(deviceName);
       NimBLEServer* pServer = NimBLEDevice::createServer();
