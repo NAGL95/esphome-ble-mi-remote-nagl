@@ -155,7 +155,7 @@ namespace esphome {
       // переподключиться именно к этому, заранее известному/забонденному адресу. Должно
       // стоять строго до NimBLEDevice::init() -- адрес нельзя сменить после инициализации
       // BT-стека.
-      uint8_t remote_mac[6] = {0x40, 0xE1, 0x71, 0x47, 0xD7, 0x07};
+      uint8_t remote_mac[6] = {0x40, 0xE1, 0x71, 0x47, 0xD7, 0x05};  // было 0x07
       esp_base_mac_addr_set(remote_mac);
 
       NimBLEDevice::init(deviceName);
