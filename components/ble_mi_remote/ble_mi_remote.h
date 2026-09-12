@@ -94,6 +94,7 @@ namespace esphome {
 
 			private:
 				bool is_connected();
+				
 				void update_timer();
 				void exit_pairing_mode();
 				void applyAdvertisementData(bool pairing_mode);
@@ -110,6 +111,7 @@ namespace esphome {
 				NimBLEAdvertising*		advertising;
 
 				bool 				_reconnect{true};
+				bool 				_pending_special_report{false};
 				uint32_t 			_default_delay{100};
 				uint32_t 			_release_delay{8};
 				KeyReport			_keyReport;

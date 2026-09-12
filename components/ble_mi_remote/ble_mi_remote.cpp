@@ -515,18 +515,27 @@ namespace esphome {
     }
 
     void BleMiRemote::pressSpecial(uint8_t k, bool with_timer) {
+      uint8_t bit = k % 8;
+      uint8_t byte = int(k / 8);
+      _specialKeyReport.keys[byte] |= (1 << bit);
+        
       if (this->is_connected()) {
         if (with_timer) {
           this->update_timer();
         }
-          uint8_t bit = k % 8;
-          uint8_t byte = int(k / 8);
-
-          _specialKeyReport.keys[byte] |= (1 << bit);
-
-          ESP_LOGD(TAG, "Send: %d, %d, %d", _specialKeyReport.keys[0], _specialKeyReport.keys[1], _specialKeyReport.keys[2]);
-
-          sendReport (&_specialKeyReport);
+        ESP_LOGD(TAG, "Send: %d, %d, %d", _specialKeyReport.keys[0], _specialKeyReport.keys[1], _specialKeyReport.keys[2]);
+        sendReport(&_specialKeyReport);
+      } else {
+        ESP_LOGI(TAG, "Not connected -- kicking advertising, queuing report for onConnect");
+        this->_pending_special_report = true;
+        applyAdvertisementData(false);
+        advertising->stop();
+        advertising->start();
+        this->cancel_timeout("pending_connect");
+        this->set_timeout("pending_connect", 5000, [this]() {
+          ESP_LOGI(TAG, "Pending report timed out, no connection");
+          this->_pending_special_report = false;
+        });
       }
     }
 
@@ -551,9 +560,14 @@ namespace esphome {
 
     void BleMiRemote::onConnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo) {
       this->_connected = true;
-      NimBLEConnInfo peer = connInfo;
-
       release();
+        
+      if (this->_pending_special_report) {
+        this->_pending_special_report = false;
+        this->cancel_timeout("pending_connect");
+        ESP_LOGI(TAG, "Connected -- sending queued report");
+        sendReport(&_specialKeyReport);
+      }
     }
 
     void BleMiRemote::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo, int reason) {
