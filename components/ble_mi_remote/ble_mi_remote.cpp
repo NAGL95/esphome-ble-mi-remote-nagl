@@ -574,15 +574,11 @@ namespace esphome {
     void BleMiRemote::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo, int reason) {
       this->_connected = false;
       if (this->_reconnect) {
-        applyAdvertisementData(false);  this->_connected = false;
-  if (this->_reconnect) {
-    applyAdvertisementData(false);
-    pServer->startAdvertising();
-  }
-}
+        applyAdvertisementData(false);
         pServer->startAdvertising();
       }
     }
+
 
     void BleMiRemote::onWrite(NimBLECharacteristic *me, NimBLEConnInfo& connInfo) {
       uint8_t *value = (uint8_t*) (me->getValue().c_str());
