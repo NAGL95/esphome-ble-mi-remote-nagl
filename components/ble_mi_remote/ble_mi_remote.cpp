@@ -211,8 +211,9 @@ namespace esphome {
       if (this->_reconnect) {
         pServer->advertiseOnDisconnect(true);
       }
-
-      pServer->startAdvertising();
+      applyAdvertisementData(false);
+      advertising->stop();
+      advertising->start();
     }
 
     void BleMiRemote::update() { state_sensor_->publish_state(this->_connected); }
@@ -490,6 +491,7 @@ namespace esphome {
     void BleMiRemote::onDisconnect(NimBLEServer *pServer, NimBLEConnInfo& connInfo, int reason) {
       this->_connected = false;
       if (this->_reconnect) {
+        applyAdvertisementData(false);
         pServer->startAdvertising();
       }
     }
